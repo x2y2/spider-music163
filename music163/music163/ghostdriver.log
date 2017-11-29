@@ -1,0 +1,19 @@
+[INFO  - 2017-11-29T11:12:51.242Z] GhostDriver - Main - running on port 39989
+[INFO  - 2017-11-29T11:12:52.163Z] Session [3dc73c00-d4f6-11e7-99ac-d7e5aaa81b8f] - page.settings - {"XSSAuditingEnabled":false,"javascriptCanCloseWindows":true,"javascriptCanOpenWindows":true,"javascriptEnabled":true,"loadImages":false,"localToRemoteUrlAccessEnabled":false,"userAgent":"Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1","webSecurityEnabled":true}
+[INFO  - 2017-11-29T11:12:52.163Z] Session [3dc73c00-d4f6-11e7-99ac-d7e5aaa81b8f] - page.customHeaders:  - {}
+[INFO  - 2017-11-29T11:12:52.163Z] Session [3dc73c00-d4f6-11e7-99ac-d7e5aaa81b8f] - Session.negotiatedCapabilities - {"browserName":"phantomjs","version":"2.1.1","driverName":"ghostdriver","driverVersion":"1.2.0","platform":"linux-unknown-64bit","javascriptEnabled":true,"takesScreenshot":true,"handlesAlerts":false,"databaseEnabled":false,"locationContextEnabled":false,"applicationCacheEnabled":false,"browserConnectionEnabled":false,"cssSelectorsEnabled":true,"webStorageEnabled":false,"rotatable":false,"acceptSslCerts":false,"nativeEvents":true,"proxy":{"proxyType":"direct"}}
+[INFO  - 2017-11-29T11:12:52.163Z] SessionManagerReqHand - _postNewSessionCommand - New Session Created: 3dc73c00-d4f6-11e7-99ac-d7e5aaa81b8f
+[ERROR - 2017-11-29T11:13:27.712Z] Session [3dc73c00-d4f6-11e7-99ac-d7e5aaa81b8f] - page.onError - msg: TypeError: undefined is not an object (evaluating 'bbV4Z.addCallback')
+
+  phantomjs://platform/console++.js:263 in error
+[ERROR - 2017-11-29T11:13:27.712Z] Session [3dc73c00-d4f6-11e7-99ac-d7e5aaa81b8f] - page.onError - stack:
+  (anonymous function) (http://s3.music.126.net/sep/s/2/core.js?e8ce58840ef455e51aed38b5aee4c232:131)
+  forEach (:0)
+  bb8T (http://s3.music.126.net/sep/s/2/core.js?e8ce58840ef455e51aed38b5aee4c232:17)
+  (anonymous function) (http://s3.music.126.net/sep/s/2/core.js?e8ce58840ef455e51aed38b5aee4c232:131)
+  (anonymous function) (http://s3.music.126.net/sep/s/2/core.js?e8ce58840ef455e51aed38b5aee4c232:1)
+  NO0x (http://s3.music.126.net/sep/s/2/core.js?e8ce58840ef455e51aed38b5aee4c232:25)
+  (anonymous function) (http://s3.music.126.net/sep/s/2/core.js?e8ce58840ef455e51aed38b5aee4c232:1)
+
+  phantomjs://platform/console++.js:263 in error
+[INFO  - 2017-11-29T11:14:48.128Z] SessionManagerReqHand - _cleanupWindowlessSessions - Asynchronous Sessions clean-up phase starting NOW
