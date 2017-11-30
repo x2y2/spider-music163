@@ -59,19 +59,23 @@ class Music163SpiderMiddleware(object):
 from selenium import webdriver
 from scrapy.http import HtmlResponse
 from selenium.webdriver.support.wait  import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
 class SeleniumMiddleware(object):
   def process_request(self,request,spider):
-    service_args = []
-    service_args.append('--load-images=false')
-    service_args.append('--disk-cache=yes')
-    service_args.append('--ignore-ssl-errors=true')
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.binary_locaion = '/usr/bin/google-chrome-stable'
+    capabilities = {}
+    capabilities['platform'] = 'Linux'
+    capabilities['version'] = '16.04'
     if spider.name == "music163":
       print '=======start parse {0}========='.format(request.url)
-      driver = webdriver.PhantomJS(service_args=service_args)
-      driver.implicitly_wait(10)
+      #driver = webdriver.PhantomJS()
+      driver = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver',chrome_options=options,desired_capabilities=capabilities)
       try:
         driver.get(request.url)
         driver.switch_to.frame('g_iframe')
