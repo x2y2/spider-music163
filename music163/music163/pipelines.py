@@ -17,6 +17,7 @@ class Music163Pipeline(object):
       for ptitle,values in v.items():
         for title,url in zip(values['stitle'],values['surl']):  
           file_path = os.path.join(dir_path,str(i) + '_' + ptitle)
+          i += 1
           file_name = title + '.mp3'
           if not os.path.exists(file_path):
             os.makedirs(file_path)
