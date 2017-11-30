@@ -56,40 +56,44 @@ class Music163Spider(scrapy.Spider):
 
   def playlist_parse(self,response):
     item = Music163Item()
-    mid =  []
-    mtitle = []
-    murl = []
+    title = []
     html = response.body
     soup = BeautifulSoup(html,'html.parser')
+    playlist = soup.find_all(name="h2",attrs={'class': 'f-ff2 f-brk'})
+    p_title = playlist[0].get_text().encode('utf-8')
+    title.append({p_title:{}})
+    title[len(title) - 1][p_title]['surl'] = []
+    title[len(title) - 1][p_title]['stitle'] = []
     results = soup.find_all(name="span",attrs={'class': 'txt'})
+    #get song id
     for each in results:
       ids = each.a.get('href').split('=')[1]
-      titles = each.b.get('title').encode('utf-8')
       urls = self.getUrl(ids)
-      mid.append(ids)
-      mtitle.append(titles)
-      murl.append(urls)
-      print '========seek out {0}======='.format(titles)
-    item['id'] = mid
-    item['title'] = mtitle
-    item['url'] = murl
+      titles = each.b.get('title').encode('utf-8')
+      print '========seek out song {0}======='.format(titles)
+      title[len(title) - 1][p_title]['stitle'].append(titles)
+      title[len(title) - 1][p_title]['surl'].append(urls)
+    item['title'] = title
     yield item
+
 
 
   def parse(self,response):
     html = response.body
     soup = BeautifulSoup(html,'html.parser')
     results = soup.find_all(name='a',attrs={'class': 'tit f-thide s-fc0'})
-    #url = 'http://music.163.com/playlist?id=1982066521'
+    url = 'http://music.163.com/playlist?id=1982066521'
+    #get playlist id
     for each in results:
       href = each.get('href')
       url = response.urljoin(href.encode('utf-8'))
-      print '==========seek out {0}============='.format(url)
-      yield scrapy.Request(url = url,callback=self.playlist_parse)
-    #翻页
+    print '==========seek out {0}============='.format(url)
+    yield scrapy.Request(url = url,callback=self.playlist_parse)
+    #pagedown
     #next_page = soup.find_all(name='a',attrs={'class': 'zbtn znxt'})
     #if next_page:
     #  next_url = next_page[0].get('href')
+    #  url = response.urljoin(next_url.encode('utf-8'))
     #  yield scrapy.Request(url,callback=self.parse)
 
   
