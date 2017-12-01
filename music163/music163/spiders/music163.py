@@ -2,6 +2,7 @@
 #encoding:utf-8 
 import json
 import os
+import re
 import base64
 import requests
 import time
@@ -64,15 +65,22 @@ class Music163Spider(scrapy.Spider):
     title.append({p_title:{}})
     title[len(title) - 1][p_title]['surl'] = []
     title[len(title) - 1][p_title]['stitle'] = []
-    results = soup.find_all(name="span",attrs={'class': 'txt'})
-    #get song id
-    for each in results:
+    title[len(title) - 1][p_title]['artist'] = []
+    songs = soup.find_all(name="span",attrs={'class': 'txt'})
+    artists = soup.find_all(name="div",attrs={'title':re.compile('.*'),'class':'text'})
+    #get artist
+    for each in artists:
+      artist = each.span.get('title').encode('utf-8')
+      title[len(title) - 1][p_title]['artist'].append(artist)
+      print 'from {0} artist is {1}'.format(p_title,artist)
+    #get song's info
+    for each in songs:
       ids = each.a.get('href').split('=')[1]
       urls = self.getUrl(ids)
       titles = each.b.get('title').encode('utf-8')
-      print '========seek out song {0}======='.format(titles)
       title[len(title) - 1][p_title]['stitle'].append(titles)
       title[len(title) - 1][p_title]['surl'].append(urls)
+      print 'song "{0}" from {1}'.format(titles,p_title)
     item['title'] = title
     yield item
 
@@ -82,19 +90,19 @@ class Music163Spider(scrapy.Spider):
     html = response.body
     soup = BeautifulSoup(html,'html.parser')
     results = soup.find_all(name='a',attrs={'class': 'tit f-thide s-fc0'})
-    url = 'http://music.163.com/playlist?id=1982066521'
+    #url = 'http://music.163.com/playlist?id=1982066521'
     #get playlist id
     for each in results:
       href = each.get('href')
       url = response.urljoin(href.encode('utf-8'))
-    print '==========seek out {0}============='.format(url)
-    yield scrapy.Request(url = url,callback=self.playlist_parse)
+      print 'seek out playlist [{0}]'.format(url)
+      yield scrapy.Request(url = url,callback=self.playlist_parse)
     #pagedown
-    #next_page = soup.find_all(name='a',attrs={'class': 'zbtn znxt'})
-    #if next_page:
-    #  next_url = next_page[0].get('href')
-    #  url = response.urljoin(next_url.encode('utf-8'))
-    #  yield scrapy.Request(url,callback=self.parse)
+    next_page = soup.find_all(name='a',attrs={'class': 'zbtn znxt'})
+    if next_page:
+      next_url = next_page[0].get('href')
+      url = response.urljoin(next_url.encode('utf-8'))
+      yield scrapy.Request(url,callback=self.parse)
 
   
 

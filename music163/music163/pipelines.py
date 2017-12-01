@@ -13,12 +13,11 @@ class Music163Pipeline(object):
 
   def process_item(self, item, spider):
     dir_path = os.path.join(settings.MP3_STORE,spider.name)
-    for i,v in enumerate(item['title']):
+    for v in item['title']:
       for ptitle,values in v.items():
-        for title,url in zip(values['stitle'],values['surl']):  
-          file_path = os.path.join(dir_path,str(i) + '_' + ptitle)
-          i += 1
-          file_name = title + '.mp3'
+        for title,url,artist in zip(values['stitle'],values['surl'],values['artist']):  
+          file_path = os.path.join(dir_path,ptitle)
+          file_name = title + '-' + artist + '.mp3'
           if not os.path.exists(file_path):
             os.makedirs(file_path)
           if os.path.exists(os.path.join(file_path,file_name)):
@@ -31,7 +30,7 @@ class Music163Pipeline(object):
               print 'start download {0}'.format(url)
               conn = urllib2.urlopen(url,timeout=3)
               fp.write(conn.read())
-              print 'download {0} is end'.format(url)
+              print 'finish download {0}'.format(url)
             except Exception as e:
                print e
     return item
