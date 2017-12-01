@@ -20,6 +20,8 @@ class Music163Spider(scrapy.Spider):
   domain = "http://music.163.com"
   start_urls = ["http://music.163.com/#/discover/playlist"]
 
+  def __init__(self):
+    self.title = []
 
   def aesEncrypt(self,text,secKey):
     pad = 16 - len(text) % 16
@@ -39,7 +41,7 @@ class Music163Spider(scrapy.Spider):
   def createSecretKey(self,size):
     return (''.join(map(lambda xx: (hex(ord(xx))[2:]), os.urandom(size))))[0:16]
 
-  def getUrl(self,id):
+  def __getUrl(self,id):
     url = 'http://music.163.com/weapi/song/enhance/player/url?csrf_token='
     text = {"ids": [id],"br":"128000",'csrf_token': 'e0f2e995baf3e1fc135a80ab8ee491ee'}
     headers = {'Cookie': 'appver=1.5.2;', 'Referer': 'http://music.163.com/'}
@@ -55,36 +57,60 @@ class Music163Spider(scrapy.Spider):
     url = json.loads(req.text)['data'][0]['url']
     return url
 
-  def playlist_parse(self,response):
-    item = Music163Item()
-    title = []
-    html = response.body
-    soup = BeautifulSoup(html,'html.parser')
-    playlist = soup.find_all(name="h2",attrs={'class': 'f-ff2 f-brk'})
-    p_title = playlist[0].get_text().encode('utf-8')
-    title.append({p_title:{}})
-    title[len(title) - 1][p_title]['surl'] = []
-    title[len(title) - 1][p_title]['stitle'] = []
-    title[len(title) - 1][p_title]['artist'] = []
-    songs = soup.find_all(name="span",attrs={'class': 'txt'})
+  def __get_artist(self,soup,p_title):
+    self.title[len(self.title) - 1][p_title]['artist'] = []
     artists = soup.find_all(name="div",attrs={'title':re.compile('.*'),'class':'text'})
-    #get artist
     for each in artists:
       artist = each.span.get('title').encode('utf-8')
-      title[len(title) - 1][p_title]['artist'].append(artist)
+      self.title[len(self.title) - 1][p_title]['artist'].append(artist)
       print 'from {0} artist is {1}'.format(p_title,artist)
-    #get song's info
+
+  def __get_songs_info(self,soup):
+    playlist = soup.find_all(name="h2",attrs={'class': 'f-ff2 f-brk'})
+    p_title = playlist[0].get_text().encode('utf-8')
+    self.title.append({p_title:{}})
+    self.__get_artist(soup,p_title)
+    self.title[len(self.title) - 1][p_title]['surl'] = []
+    self.title[len(self.title) - 1][p_title]['stitle'] = []
+    songs = soup.find_all(name="span",attrs={'class': 'txt'})
     for each in songs:
       ids = each.a.get('href').split('=')[1]
-      urls = self.getUrl(ids)
+      urls = self.__getUrl(ids)
       titles = each.b.get('title').encode('utf-8')
-      title[len(title) - 1][p_title]['stitle'].append(titles)
-      title[len(title) - 1][p_title]['surl'].append(urls)
+      self.title[len(self.title) - 1][p_title]['stitle'].append(titles)
+      self.title[len(self.title) - 1][p_title]['surl'].append(urls)
       print 'song "{0}" from {1}'.format(titles,p_title)
-    item['title'] = title
+
+  def playlist_parse(self,response):
+    item = Music163Item()
+    #title = []
+    html = response.body
+    soup = BeautifulSoup(html,'html.parser')
+    #playlist = self.soup.find_all(name="h2",attrs={'class': 'f-ff2 f-brk'})
+    #p_title = playlist[0].get_text().encode('utf-8')
+    #self.title.append({p_title:{}})
+    #self.title[len(title) - 1][p_title]['surl'] = []
+    #self.title[len(title) - 1][p_title]['stitle'] = []
+    #self.title[len(title) - 1][p_title]['artist'] = []
+    #songs = soup.find_all(name="span",attrs={'class': 'txt'})
+    #artists = soup.find_all(name="div",attrs={'title':re.compile('.*'),'class':'text'})
+    #get artist
+    #for each in artists:
+    #  artist = each.span.get('title').encode('utf-8')
+    #  self.title[len(title) - 1][p_title]['artist'].append(artist)
+    #  print 'from {0} artist is {1}'.format(p_title,artist)
+    #get song's info
+    #for each in songs:
+    #  ids = each.a.get('href').split('=')[1]
+    #  urls = self.getUrl(ids)
+    #  titles = each.b.get('title').encode('utf-8')
+    #  self.title[len(title) - 1][p_title]['stitle'].append(titles)
+    #  self.title[len(title) - 1][p_title]['surl'].append(urls)
+    #  print 'song "{0}" from {1}'.format(titles,p_title)
+    #self.__get_artist(soup)
+    self.__get_songs_info(soup)
+    item['title'] = self.title
     yield item
-
-
 
   def parse(self,response):
     html = response.body

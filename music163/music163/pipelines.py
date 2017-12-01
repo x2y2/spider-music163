@@ -24,14 +24,17 @@ class Music163Pipeline(object):
             continue
           else: 
             os.chdir(file_path)
-            os.mknod(file_name)
-          with open(os.path.join(file_path,file_name),'wb') as fp:
             try:
-              print 'start download {0}'.format(url)
-              conn = urllib2.urlopen(url,timeout=3)
-              fp.write(conn.read())
-              print 'finish download {0}'.format(url)
+              os.mknod(file_name)
+              with open(os.path.join(file_path,file_name),'wb') as fp:
+                try:
+                  print 'start download {0}'.format(url)
+                  conn = urllib2.urlopen(url,timeout=3)
+                  fp.write(conn.read())
+                  print 'finish download {0}'.format(url)
+                except Exception as e:
+                   print e
             except Exception as e:
-               print e
+              print e
     return item
 
