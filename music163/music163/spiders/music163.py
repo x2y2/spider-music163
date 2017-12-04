@@ -10,20 +10,24 @@ from Crypto.Cipher import AES
 from bs4 import BeautifulSoup
 from ..items import Music163Item
 import urlparse
-
-
-
 import scrapy
 from scrapy.crawler import CrawlerProcess
-class Music163Spider(scrapy.Spider):
-  name = "music163"
-  domain = "http://music.163.com"
-  start_urls = ["http://music.163.com/#/discover/playlist"]
+from scrapy_redis.spiders import RedisSpider
+from redis import Redis
+from .. import settings
 
-  def __init__(self):
+class Music163Spider(RedisSpider):
+  name = "music163"
+  #domain = "http://music.163.com"
+  #start_urls = ["http://music.163.com/#/discover/playlist"]
+  redis_key = 'Music163Spider:start_urls'
+  redis = Redis(host=settings.REDIS_HOST,port=settings.REDIS_PORT)
+  redis.lpush(redis_key,'http://music.163.com/#/discover/playlist')
+
+  def __init__(self,*args,**kwargs):
     self.title = []
 
-  def aesEncrypt(self,text,secKey):
+  def _aesEncrypt(self,text,secKey):
     pad = 16 - len(text) % 16
     text = text + pad * chr(pad)
     encryptor = AES.new(secKey,2,'0102030405060708')
@@ -32,16 +36,16 @@ class Music163Spider(scrapy.Spider):
     return ciphertext
 
 
-  def rsaEncrypt(self,text,pubKey,modulus):
+  def _rsaEncrypt(self,text,pubKey,modulus):
     text = text[::-1]
     rs = int(text.encode('hex'),16) ** int(pubKey,16) % int(modulus,16)
     return format(rs,'x').zfill(256)
 
 
-  def createSecretKey(self,size):
+  def _createSecretKey(self,size):
     return (''.join(map(lambda xx: (hex(ord(xx))[2:]), os.urandom(size))))[0:16]
 
-  def __getUrl(self,id):
+  def _getUrl(self,id):
     url = 'http://music.163.com/weapi/song/enhance/player/url?csrf_token='
     text = {"ids": [id],"br":"128000",'csrf_token': 'e0f2e995baf3e1fc135a80ab8ee491ee'}
     headers = {'Cookie': 'appver=1.5.2;', 'Referer': 'http://music.163.com/'}
@@ -49,66 +53,42 @@ class Music163Spider(scrapy.Spider):
     nonce = '0CoJUm6Qyw8W8jud'
     pubKey = '010001'
     text = json.dumps(text)
-    secKey = self.createSecretKey(16)
-    encText = self.aesEncrypt(self.aesEncrypt(text, nonce), secKey)
-    encSecKey = self.rsaEncrypt(secKey, pubKey, modulus)
+    secKey = self._createSecretKey(16)
+    encText = self._aesEncrypt(self._aesEncrypt(text, nonce), secKey)
+    encSecKey = self._rsaEncrypt(secKey, pubKey, modulus)
     data = {'params': encText, 'encSecKey': encSecKey}
     req = requests.post(url,headers=headers, data=data)
     url = json.loads(req.text)['data'][0]['url']
     return url
 
-  def __get_artist(self,soup,p_title):
+  def _get_artist(self,soup,p_title):
     self.title[len(self.title) - 1][p_title]['artist'] = []
     artists = soup.find_all(name="div",attrs={'title':re.compile('.*'),'class':'text'})
     for each in artists:
       artist = each.span.get('title').encode('utf-8')
       self.title[len(self.title) - 1][p_title]['artist'].append(artist)
-      print 'from {0} artist is {1}'.format(p_title,artist)
 
-  def __get_songs_info(self,soup):
+  def _get_songs_info(self,soup):
     playlist = soup.find_all(name="h2",attrs={'class': 'f-ff2 f-brk'})
     p_title = playlist[0].get_text().encode('utf-8')
     self.title.append({p_title:{}})
-    self.__get_artist(soup,p_title)
+    self._get_artist(soup,p_title)
     self.title[len(self.title) - 1][p_title]['surl'] = []
     self.title[len(self.title) - 1][p_title]['stitle'] = []
     songs = soup.find_all(name="span",attrs={'class': 'txt'})
     for each in songs:
       ids = each.a.get('href').split('=')[1]
-      urls = self.__getUrl(ids)
+      urls = self._getUrl(ids)
       titles = each.b.get('title').encode('utf-8')
       self.title[len(self.title) - 1][p_title]['stitle'].append(titles)
       self.title[len(self.title) - 1][p_title]['surl'].append(urls)
-      print 'song "{0}" from {1}'.format(titles,p_title)
+      print 'get "{0}" from {1}'.format(titles,p_title)
 
   def playlist_parse(self,response):
     item = Music163Item()
-    #title = []
     html = response.body
     soup = BeautifulSoup(html,'html.parser')
-    #playlist = self.soup.find_all(name="h2",attrs={'class': 'f-ff2 f-brk'})
-    #p_title = playlist[0].get_text().encode('utf-8')
-    #self.title.append({p_title:{}})
-    #self.title[len(title) - 1][p_title]['surl'] = []
-    #self.title[len(title) - 1][p_title]['stitle'] = []
-    #self.title[len(title) - 1][p_title]['artist'] = []
-    #songs = soup.find_all(name="span",attrs={'class': 'txt'})
-    #artists = soup.find_all(name="div",attrs={'title':re.compile('.*'),'class':'text'})
-    #get artist
-    #for each in artists:
-    #  artist = each.span.get('title').encode('utf-8')
-    #  self.title[len(title) - 1][p_title]['artist'].append(artist)
-    #  print 'from {0} artist is {1}'.format(p_title,artist)
-    #get song's info
-    #for each in songs:
-    #  ids = each.a.get('href').split('=')[1]
-    #  urls = self.getUrl(ids)
-    #  titles = each.b.get('title').encode('utf-8')
-    #  self.title[len(title) - 1][p_title]['stitle'].append(titles)
-    #  self.title[len(title) - 1][p_title]['surl'].append(urls)
-    #  print 'song "{0}" from {1}'.format(titles,p_title)
-    #self.__get_artist(soup)
-    self.__get_songs_info(soup)
+    self._get_songs_info(soup)
     item['title'] = self.title
     yield item
 
