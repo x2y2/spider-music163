@@ -10,7 +10,7 @@ chardet==3.0.4
 cipher==0.1
 constantly==15.1.0
 crypto==1.4.1
-cryptography==2.1.4
+cryptography==3.2
 cssselect==1.0.1
 EasyProcess==0.2.3
 enum34==1.1.6
